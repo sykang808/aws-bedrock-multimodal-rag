@@ -4,6 +4,7 @@
 ############################################################    
 ############################################################    
 
+
 import json
 import copy
 import boto3
@@ -17,6 +18,7 @@ from typing import Any, Dict, List, Optional, List, Tuple
 from opensearchpy import OpenSearch, RequestsHttpConnection
 from texttable import Texttable
 
+from termcolor import colored
 
 import base64
 from PIL import Image
@@ -589,10 +591,10 @@ class retriever_utils():
         if len(rag_fusion_query) > query_augmentation_size: rag_fusion_query = rag_fusion_query[-query_augmentation_size:]
         rag_fusion_query.insert(0, kwargs["query"])
 
-        if kwargs["verbose"]:
-            print("\n")
-            print("===== RAG-Fusion Queries =====")
-            print(rag_fusion_query)
+        # if kwargs["verbose"]:
+        print("\n")
+        print("===== RAG-Fusion Queries =====")
+        print(rag_fusion_query)
 
         tasks = []
         for query in rag_fusion_query:
@@ -1019,13 +1021,13 @@ class retriever_utils():
         if verbose:
             
             t = Texttable()
-            t.add_rows([['async_mode', 'reranker','rag_fusion','Hybride','parent_document','complex_document'],[str(async_mode), str(reranker),str(rag_fusion),str(hyde), str(parent_document),str(complex_doc)]])
+            t.add_rows([['async_mode', 'reranker','rag_fusion','HyDe','parent_document','complex_document'],[str(async_mode), str(reranker),str(rag_fusion),str(hyde), str(parent_document),str(complex_doc)]])
             print(t.draw())
             # print("##############################")
             # print("async_mode : " + str(async_mode))
             # print("reranker : "+ str(reranker))
             # print("rag_fusion : " + str(rag_fusion))
-            # print("Hybride : " + str(hyde))
+            # print("HyDe : " + str(hyde))
             # print("parent_document : " + str(parent_document))
             # print("complex_document : " + str(complex_doc))
             print()
@@ -1045,14 +1047,18 @@ class retriever_utils():
                 # print("similar_docs_without_reranker")
                 # print("##############################")
                 print()
-                print(colored("Reranker를 사용하지 않았을 경우 비슷한 문서", 'yellow', attrs=['bold']))
+                print(colored("시맨틱 + 키워드 검색 결과 비슷한 문서", 'yellow', attrs=['bold']))
                 show_similar_docs (similar_docs_wo_reranker)
 
             # print("##############################")
             # print("similar_docs")
             # print("##############################")
             print()
-            print(colored("최종 선택된 문서", "red", attrs=['bold']))
+            if reranker :
+                print(colored("Reranker를 사용한 최종 선택된 문서", "red", attrs=['bold']))
+            else:
+                print(colored("시맨틱 + 키워드 검색 결과 비슷한 문서", 'yellow', attrs=['bold']))
+                
             show_similar_docs (similar_docs)
         
         similar_docs = list(map(lambda x:x[0], similar_docs))
@@ -1266,7 +1272,6 @@ def show_context_used(context_list, limit=10):
     for idx, context in enumerate(context_list):
 
         if idx < limit:
-            
             category = "None"
             if "category" in context.metadata:
                 category = context.metadata["category"]
@@ -1311,8 +1316,8 @@ def show_similar_docs(context_list, limit=10):
             t = Texttable()
             t.add_rows([['Score', 'Contents'],[str(context[1]),context[0].page_content]])
             print(t.draw())
-
-            if context[0].metadata['category'] == "Image" :
+            # print( context )
+            if "category" in context[0].metadata and context[0].metadata['category'] == "Image" :
                 img = Image.open(BytesIO(base64.b64decode(context[0].metadata['image_base64'] )))
                 plt.imshow(img)
                 plt.show()
@@ -1383,4 +1388,5 @@ class KoSimCSERobertaContentHandler(EmbeddingsContentHandler):
             print(f"Other # of dimension: {ndim}")
             emb = None
         return emb    
+
 
